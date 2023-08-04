@@ -1,0 +1,56 @@
+import hashlib
+
+# 计算叶节点的哈希值
+def calculate_leaf_hash(data):
+    return hashlib.sha256(data).digest()
+
+# 计算内部节点的哈希值
+def calculate_internal_hash(left_hash, right_hash):
+    return hashlib.sha256(left_hash + right_hash).digest()
+
+# 构建默克尔树
+def build_merkle_tree(data):
+    if len(data) == 0:
+        return None
+
+    # 存储树中的节点
+    nodes = []
+
+    # 添加叶节点
+    for d in data:
+        leaf_hash = calculate_leaf_hash(d)
+        nodes.append(leaf_hash)
+
+    num_leaves = len(nodes)
+    level_offset = 0
+
+    # 生成内部节点
+    while num_leaves > 1:
+        level_nodes = []  # 用于存储当前层级的节点
+
+        for i in range(level_offset, num_leaves, 2):
+            left_hash = nodes[i]
+            right_hash = nodes[i + 1] if i + 1 < num_leaves else left_hash
+
+            internal_hash = calculate_internal_hash(left_hash, right_hash)
+            level_nodes.append(internal_hash)
+
+        # 将当前层级的节点作为下一层级的叶节点
+        nodes.extend(level_nodes)
+
+        level_offset = num_leaves
+        num_leaves = len(level_nodes)
+
+    return nodes
+
+# 示例用法
+data = [
+    b'Hello',
+    b'World',
+    b'Merkle',
+    b'Tree'
+]
+
+merkle_tree = build_merkle_tree(data)
+
+print('默克尔树根节点的哈希值:', merkle_tree[-1].hex())
